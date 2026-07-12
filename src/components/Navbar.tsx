@@ -2,36 +2,37 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { DEMO_USERS, type RoleKey } from "@/lib/demo-data";
-
-type Role = RoleKey | null;
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "@/lib/auth-client";
 
 export default function Navbar() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
-
-  // Demo: default to "owner" role so dashboard shows by default
-  const [currentRole, setCurrentRole] = useState<Role>("owner");
-
-  const user = currentRole ? DEMO_USERS[currentRole] : null;
-  const isPending = false;
+  
+  // 1. Safe access to user session data
+  const { data: session, isPending } = useSession();
+  const user = session?.user;
   const role = user?.role;
 
-  const handleSignOut = () => {
-    setCurrentRole(null);
-    setIsProfileOpen(false);
-    setIsMenuOpen(false);
+  // 2. Real Sign Out using Better Auth client
+  const handleSignOut = async () => {
+    try {
+      await signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            setIsProfileOpen(false);
+            setIsMenuOpen(false);
+            router.push("/"); // Redirect after successful logout
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
   };
 
-  const handleRoleChange = (newRole: Role) => {
-    setCurrentRole(newRole);
-    setIsRoleSwitcherOpen(false);
-    setIsProfileOpen(false);
-    setIsMenuOpen(false);
-  };
-
-  // Navigation links per role
+  // 3. Navigation links per real role mapping
   const getNavLinks = () => {
     if (!user) {
       return [
@@ -76,17 +77,14 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#070714]/90 backdrop-blur-md">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-        {/* LOGO - Root Health Style */}
+        
+        {/* LOGO */}
         <Link href="/" className="flex items-center gap-1.5">
-          <span className="text-2xl font-black tracking-tight text-white">
-            Root
-          </span>
-          <span className="text-2xl font-black tracking-tight text-blue-500">
-            Health
-          </span>
+          <span className="text-2xl font-black tracking-tight text-white">Root</span>
+          <span className="text-2xl font-black tracking-tight text-blue-500">Health</span>
         </Link>
 
-        {/* DESKTOP CENTER NAVIGATION LINKS */}
+        {/* DESKTOP CENTER LINKS */}
         <div className="hidden md:flex items-center justify-center flex-1 mx-8">
           <ul className="flex items-center gap-8">
             {navLinks.map((link) => (
@@ -105,104 +103,10 @@ export default function Navbar() {
         {/* RIGHT SIDE - ACTIONS */}
         <div className="flex items-center gap-6">
           <div className="hidden items-center gap-6 md:flex">
-            {/* Demo Role Switcher Badge */}
-            <div className="relative">
-              <button
-                onClick={() => setIsRoleSwitcherOpen(!isRoleSwitcherOpen)}
-                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-gray-300 transition hover:text-white hover:bg-white/10"
-              >
-                <span className="flex h-2 w-2 rounded-full bg-green-400" />
-                <span>Demo: {currentRole ? role : "guest"}</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-3 w-3 transition-transform ${isRoleSwitcherOpen ? "rotate-180" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              {isRoleSwitcherOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setIsRoleSwitcherOpen(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-xl border border-white/5 bg-[#0c0c1f] p-2 shadow-2xl ring-1 ring-black/5 z-20">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Switch Demo Role
-                    </div>
-                    {(Object.keys(DEMO_USERS) as Array<keyof typeof DEMO_USERS>).map(
-                      (roleKey) => (
-                        <button
-                          key={roleKey}
-                          onClick={() => handleRoleChange(roleKey)}
-                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
-                            currentRole === roleKey
-                              ? "bg-blue-500/10 text-blue-400"
-                              : "text-gray-300 hover:bg-white/5 hover:text-white"
-                          }`}
-                        >
-                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-                            {DEMO_USERS[roleKey].avatar}
-                          </span>
-                          <div className="flex flex-col">
-                            <span className="capitalize">{roleKey}</span>
-                            <span className="text-xs text-gray-500">
-                              {DEMO_USERS[roleKey].name}
-                            </span>
-                          </div>
-                          {currentRole === roleKey && (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="ml-auto h-4 w-4 text-blue-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2.5}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      )
-                    )}
-                    <div className="my-1 border-t border-white/5" />
-                    <button
-                      onClick={() => handleRoleChange(null)}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
-                        currentRole === null
-                          ? "bg-blue-500/10 text-blue-400"
-                          : "text-gray-300 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-                        G
-                      </span>
-                      <span>Guest (Public)</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Auth Section */}
             <div className="flex items-center gap-2">
               {isPending ? (
                 <div className="h-4 w-20 animate-pulse rounded bg-white/10" />
               ) : !user ? (
-                /* Public Layout Profile Links */
                 <div className="flex items-center gap-6">
                   <Link
                     href="/doctor-apply"
@@ -219,14 +123,14 @@ export default function Navbar() {
                   </Link>
                 </div>
               ) : (
-                /* Authenticated Profile Toggle Link */
+                /* Authenticated Profile Layout Toggle */
                 <div className="relative">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition"
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-                      {user.avatar}
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white uppercase">
+                      {user.name?.charAt(0) ?? "U"}
                     </span>
                     <span>{user.name}</span>
                     <svg
@@ -237,46 +141,39 @@ export default function Navbar() {
                       stroke="currentColor"
                       strokeWidth={2}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 9l-7 7-7-7"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
 
                   {isProfileOpen && (
                     <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsProfileOpen(false)}
-                      />
-                      <div className="absolute right-0 mt-3 w-56 origin-top-right rounded-xl border border-white/5 bg-[#0c0c1f] p-2 shadow-2xl ring-1 ring-black/5 focus:outline-none z-20">
+                      <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)} />
+                      <div className="absolute right-0 mt-3 w-56 origin-top-right rounded-xl border border-white/5 bg-[#0c0c1f] p-2 shadow-2xl z-20">
                         <div className="flex items-center gap-3 border-b border-white/5 px-3 py-3">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-                            {user.avatar}
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white uppercase">
+                            {user.name?.charAt(0) ?? "U"}
                           </span>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-white">
-                              {user.name}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {user.email}
-                            </span>
+                          <div className="flex flex-col truncate">
+                            <span className="text-sm font-semibold text-white truncate">{user.name}</span>
+                            <span className="text-xs text-gray-500 truncate">{user.email}</span>
                           </div>
                         </div>
-                        <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                          {role} account
-                        </div>
+                        
+                        {role && (
+                          <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            {role} Account
+                          </div>
+                        )}
+                        
                         <Link
-                          href={`/dashboard/${role}/profile`}
+                          href={`/dashboard/${role || "user"}/profile`}
                           className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 transition"
                           onClick={() => setIsProfileOpen(false)}
                         >
                           My Profile
                         </Link>
                         <Link
-                          href={`/dashboard/${role}/settings`}
+                          href={`/dashboard/${role || "user"}/settings`}
                           className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 transition"
                           onClick={() => setIsProfileOpen(false)}
                         >
@@ -297,48 +194,31 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* MOBILE MENU BUTTON */}
+          {/* MOBILE MENU TOGGLE BUTTON */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="flex items-center justify-center rounded-lg p-2 text-white transition hover:bg-white/10 md:hidden"
             aria-label="Toggle Menu"
           >
-            {isMenuOpen ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            )}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              {isMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU PANEL */}
       {isMenuOpen && (
         <div className="border-t border-white/5 bg-[#070714] md:hidden">
           <div className="space-y-3 px-4 py-6">
@@ -356,47 +236,7 @@ export default function Navbar() {
               ))}
             </ul>
 
-            {/* Demo Role Switcher - Mobile */}
-            <div className="border-t border-white/5 pt-4">
-              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Switch Demo Role
-              </div>
-              <div className="flex flex-col gap-1">
-                {(Object.keys(DEMO_USERS) as Array<keyof typeof DEMO_USERS>).map(
-                  (roleKey) => (
-                    <button
-                      key={roleKey}
-                      onClick={() => handleRoleChange(roleKey)}
-                      className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-base font-medium transition ${
-                        currentRole === roleKey
-                          ? "bg-blue-500/10 text-blue-400"
-                          : "text-gray-300 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-                        {DEMO_USERS[roleKey].avatar}
-                      </span>
-                      <span className="capitalize">{roleKey}</span>
-                    </button>
-                  )
-                )}
-                <button
-                  onClick={() => handleRoleChange(null)}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-left text-base font-medium transition ${
-                    currentRole === null
-                      ? "bg-blue-500/10 text-blue-400"
-                      : "text-gray-300 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-                    G
-                  </span>
-                  <span>Guest (Public)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Auth Links - Mobile */}
+            {/* Mobile Auth Management */}
             <div className="border-t border-white/5 pt-4">
               <div className="flex flex-col gap-3">
                 {isPending ? (
@@ -421,20 +261,16 @@ export default function Navbar() {
                 ) : (
                   <>
                     <div className="flex items-center gap-3 px-4 py-2">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-                        {user.avatar}
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white uppercase">
+                        {user.name?.charAt(0) ?? "U"}
                       </span>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-white">
-                          {user.name}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {user.email}
-                        </span>
+                      <div className="flex flex-col truncate">
+                        <span className="text-sm font-semibold text-white truncate">{user.name}</span>
+                        <span className="text-xs text-gray-500 truncate">{user.email}</span>
                       </div>
                     </div>
                     <Link
-                      href={`/dashboard/${role}/profile`}
+                      href={`/dashboard/${role || "user"}/profile`}
                       className="block px-4 py-2 text-base font-medium text-gray-300 hover:text-white"
                       onClick={() => setIsMenuOpen(false)}
                     >

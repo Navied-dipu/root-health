@@ -1,0 +1,15 @@
+
+> root-health@0.1.0 seed
+> tsx scripts/seed-users.ts
+
+◇ injected env (5) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
+🌱 Seeding test users...
+
+❌ Failed to create doctor@roothealth.com: Server selection timed out after 30000 ms
+❌ Failed to create receptionist@roothealth.com: Topology is closed
+
+✨ Seed complete!
+
+Test credentials:
+  Doctor:        doctor@roothealth.com / Doctor123!
+  Receptionist:  receptionist@roothealth.com / Reception123!
