@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useDemoRole } from "@/lib/demo-role-context";
+import { useSession } from "@/lib/auth-client";
 
 // Inline SVG icon components
 function IconHome() {
@@ -41,7 +41,7 @@ function IconCreditCard() {
 function IconStethoscope() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.871 4A17.926 17.926 0 003 12c0 5.071 4.071 9 9 9s9-3.929 9-9a17.928 17.928 0 00-1.871-8m-14.13 0a3.37 3.37 0 116.74 0m-6.74 0h6.74m4.02 0a3.37 3.37 0 116.74 0m-6.74 0h6.74" />
     </svg>
   );
 }
@@ -82,7 +82,12 @@ interface NavItem {
 }
 
 export function DashboardSidebar() {
-  const { role } = useDemoRole();
+  const { data: session, isPending } = useSession();
+ 
+  const user = session?.user;
+  
+  // Safely read the role property from your user data
+  const role = user ? (user as any).role : undefined;
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -110,14 +115,37 @@ export function DashboardSidebar() {
     { icon: "gear", href: "/dashboard/doctor/settings", label: "Settings" },
   ];
 
+  // Map keys match the active system roles ("owner", "receptionist", "doctor")
   const navLinksMap: Record<string, NavItem[]> = {
     owner: ownerNavLinks,
     receptionist: receptionistNavLinks,
     doctor: doctorNavLinks,
   };
 
-  const activeRole = (role as string) || "doctor";
-  const navItems = navLinksMap[activeRole] || doctorNavLinks;
+  // Show skeleton while session loads to avoid flash of wrong role menu
+  if (isPending) {
+    const skeletonNav = (
+      <nav className="flex flex-col gap-1">
+        <div className="mb-4 px-3">
+          <div className="h-3 w-20 animate-pulse rounded bg-white/10" />
+        </div>
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+            <div className="h-5 w-5 animate-pulse rounded bg-white/10" />
+            <div className="h-3 w-24 animate-pulse rounded bg-white/10" />
+          </div>
+        ))}
+      </nav>
+    );
+    return (
+      <aside className="hidden w-64 shrink-0 border-r border-white/5 bg-[#0a0a1a] p-4 lg:block">
+        {skeletonNav}
+      </aside>
+    );
+  }
+
+  const activeRole = (role as string) || "user";
+  const navItems = navLinksMap[activeRole] || []; // Safe empty array fallback if role is undefined or unrecognized
 
   const navContent = (
     <nav className="flex flex-col gap-1">

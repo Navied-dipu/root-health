@@ -61,7 +61,8 @@ export default function SignUpPage() {
         return;
       }
 
-      router.push("/");
+      // Redirect to the correct dashboard based on the selected role
+      router.push(`/dashboard/${role}`);
     } catch (err) {
       setError("Something went wrong. Please try again.");
       setIsLoading(false);

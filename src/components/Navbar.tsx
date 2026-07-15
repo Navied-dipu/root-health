@@ -9,11 +9,18 @@ export default function Navbar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  
+
   // 1. Safe access to user session data
   const { data: session, isPending } = useSession();
+
   const user = session?.user;
-  const role = user?.role;
+
+  // Safely cast or read the role property from your user data
+  const role = user ? (user as any).role : undefined;
+
+  // FIXED: Removed the invalid ": string" syntax and added optional chaining
+  // console.log("Logged User Name:", user?.name);
+  // console.log("Extracted Role:", role);
 
   // 2. Real Sign Out using Better Auth client
   const handleSignOut = async () => {
@@ -44,31 +51,31 @@ export default function Navbar() {
     }
 
     switch (role) {
-      case "owner":
+      case "admin":
         return [
+          { label: "Home", href: "/" },
           { label: "Dashboard", href: "/dashboard/owner" },
-          { label: "Doctors", href: "/dashboard/owner/doctors" },
-          { label: "Patients", href: "/dashboard/owner/patients" },
-          { label: "Revenue", href: "/dashboard/owner/revenue" },
-          { label: "Tests", href: "/dashboard/owner/tests" },
+          // { label: "Doctors", href: "/dashboard/owner/doctors" },
+          // { label: "Patients", href: "/dashboard/owner/patients" },
+          // { label: "Revenue", href: "/dashboard/owner/revenue" },
+          // { label: "Tests", href: "/dashboard/owner/tests" },
         ];
       case "receptionist":
         return [
+          { label: "Home", href: "/" },
           { label: "Dashboard", href: "/dashboard/receptionist" },
-          { label: "New Patient", href: "/dashboard/receptionist/new-patient" },
-          { label: "Assign Doctor", href: "/dashboard/receptionist/assign" },
-          { label: "Tests", href: "/dashboard/receptionist/tests" },
+          // { label: "New Patient", href: "/dashboard/receptionist/new-patient" },
+          // { label: "Assign Doctor", href: "/dashboard/receptionist/assign" },
+          // { label: "Tests", href: "/dashboard/receptionist/tests" },
         ];
       case "doctor":
         return [
+          { label: "Home", href: "/" },
           { label: "Dashboard", href: "/dashboard/doctor" },
-          { label: "My Patients", href: "/dashboard/doctor/patients" },
+          // { label: "My Patients", href: "/dashboard/doctor/patients" },
         ];
       default:
-        return [
-          { label: "Home", href: "/" },
-          { label: "Dashboard", href: `/dashboard/${role || "user"}` },
-        ];
+        return [{ label: "Dashboard", href: `/dashboard/${role || "user"}` }];
     }
   };
 
@@ -77,11 +84,14 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#070714]/90 backdrop-blur-md">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-        
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-1.5">
-          <span className="text-2xl font-black tracking-tight text-white">Root</span>
-          <span className="text-2xl font-black tracking-tight text-blue-500">Health</span>
+          <span className="text-2xl font-black tracking-tight text-white">
+            Root
+          </span>
+          <span className="text-2xl font-black tracking-tight text-blue-500">
+            Health
+          </span>
         </Link>
 
         {/* DESKTOP CENTER LINKS */}
@@ -141,30 +151,41 @@ export default function Navbar() {
                       stroke="currentColor"
                       strokeWidth={2}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
 
                   {isProfileOpen && (
                     <>
-                      <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)} />
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsProfileOpen(false)}
+                      />
                       <div className="absolute right-0 mt-3 w-56 origin-top-right rounded-xl border border-white/5 bg-[#0c0c1f] p-2 shadow-2xl z-20">
                         <div className="flex items-center gap-3 border-b border-white/5 px-3 py-3">
                           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white uppercase">
                             {user.name?.charAt(0) ?? "U"}
                           </span>
                           <div className="flex flex-col truncate">
-                            <span className="text-sm font-semibold text-white truncate">{user.name}</span>
-                            <span className="text-xs text-gray-500 truncate">{user.email}</span>
+                            <span className="text-sm font-semibold text-white truncate">
+                              {user.name}
+                            </span>
+                            <span className="text-xs text-gray-500 truncate">
+                              {user.email}
+                            </span>
                           </div>
                         </div>
-                        
+
                         {role && (
                           <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             {role} Account
                           </div>
                         )}
-                        
+
                         <Link
                           href={`/dashboard/${role || "user"}/profile`}
                           className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 transition"
@@ -209,9 +230,17 @@ export default function Navbar() {
               strokeWidth={2}
             >
               {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               )}
             </svg>
           </button>
@@ -265,8 +294,12 @@ export default function Navbar() {
                         {user.name?.charAt(0) ?? "U"}
                       </span>
                       <div className="flex flex-col truncate">
-                        <span className="text-sm font-semibold text-white truncate">{user.name}</span>
-                        <span className="text-xs text-gray-500 truncate">{user.email}</span>
+                        <span className="text-sm font-semibold text-white truncate">
+                          {user.name}
+                        </span>
+                        <span className="text-xs text-gray-500 truncate">
+                          {user.email}
+                        </span>
                       </div>
                     </div>
                     <Link

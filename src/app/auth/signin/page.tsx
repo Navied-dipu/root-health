@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
-import { signIn } from "@/lib/auth-client";
+import { signIn, authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -27,18 +27,25 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const { error: signInError } = await signIn.email({
+      const result = await signIn.email({
         email,
         password,
       });
 
-      if (signInError) {
-        setError(signInError.message ?? "Failed to sign in.");
+      if (result.error) {
+        setError(result.error.message ?? "Failed to sign in.");
         setIsLoading(false);
         return;
       }
 
-      router.push("/dashboard");
+      // Get role from session and redirect to correct dashboard
+      const session = await authClient.getSession();
+      const role = (session?.data?.user as any)?.role;
+      if (role === "owner" || role === "receptionist" || role === "doctor") {
+        router.push(`/dashboard/${role}`);
+      } else {
+        router.push("/dashboard/receptionist");
+      }
     } catch (err) {
       setError("Something went wrong. Please try again.");
       setIsLoading(false);

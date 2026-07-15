@@ -1,7 +1,12 @@
 import { DashboardPage } from "@/components/Dashboard/DashboardPage";
-import { PATIENTS as patients } from "@/lib/demo-data";
+import { getPatientsData } from "@/lib/api/patients";
 
-export default function OwnerPatientsPage() {
+export default async function OwnerPatientsPage() {
+  const patients = await getPatientsData();
+  // IMPORTANT: Since this is a Server Component,
+  // this log will appear in your TERMINAL (terminal running npm run dev), NOT the browser console!
+  console.log("Fetched Patients Data on Server:", patients);
+  const patientsList = Array.isArray(patients) ? patients : [];
   return (
     <DashboardPage title="Patients" description="View and manage all patients">
       <div className="overflow-x-auto">
@@ -15,7 +20,7 @@ export default function OwnerPatientsPage() {
             </tr>
           </thead>
           <tbody>
-            {patients.map((p) => (
+            {patientsList.map((p) => (
               <tr key={p.name} className="border-b border-white/5">
                 <td className="py-3 pr-4 font-medium text-white">{p.name}</td>
                 <td className="py-3 pr-4 text-gray-400">{p.age}</td>

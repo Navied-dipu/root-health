@@ -1,6 +1,6 @@
 "use client";
 
-import { useDemoRole } from "@/lib/demo-role-context";
+import { useSession } from "@/lib/auth-client";
 
 interface DashboardPageProps {
   title: string;
@@ -9,7 +9,10 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ title, description, children }: DashboardPageProps) {
-  const { user, role } = useDemoRole();
+  const { data: session } = useSession();
+  const user = session?.user as
+    (NonNullable<typeof session.user> & { role?: string }) | undefined;
+  const role = user?.role;
 
   return (
     <div className="space-y-6">
@@ -22,8 +25,17 @@ export function DashboardPage({ title, description, children }: DashboardPagePro
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-            {user?.avatar || "?"}
+          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-bold text-white">
+            {user?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.image}
+                alt={user.name || "User"}
+                className="h-10 w-10 rounded-full object-cover"
+              />
+            ) : (
+              (user?.name?.charAt(0).toUpperCase() || "?")
+            )}
           </span>
           <div className="hidden flex-col sm:flex">
             <span className="text-sm font-semibold text-white">
