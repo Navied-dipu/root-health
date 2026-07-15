@@ -1,7 +1,10 @@
 import { DashboardPage } from "@/components/Dashboard/DashboardPage";
-import { MEDICAL_TESTS as tests } from "@/lib/demo-data";
+import { getTestsData } from "@/lib/api/tests";
 
-export default function OwnerTestsPage() {
+export default async function OwnerTestsPage() {
+   const tests = await getTestsData();
+
+   const testsList = Array.isArray(tests) ? tests : [];
   return (
     <DashboardPage title="Tests" description="Manage available medical tests">
       <div className="overflow-x-auto">
@@ -15,7 +18,7 @@ export default function OwnerTestsPage() {
             </tr>
           </thead>
           <tbody>
-            {tests.map((t) => (
+            {testsList.map((t) => (
               <tr key={t.name} className="border-b border-white/5">
                 <td className="py-3 pr-4 font-medium text-white">{t.name}</td>
                 <td className="py-3 pr-4 text-gray-400">{t.category}</td>

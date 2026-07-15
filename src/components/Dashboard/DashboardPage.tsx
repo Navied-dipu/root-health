@@ -10,8 +10,7 @@ interface DashboardPageProps {
 
 export function DashboardPage({ title, description, children }: DashboardPageProps) {
   const { data: session } = useSession();
-  const user = session?.user as
-    (NonNullable<typeof session.user> & { role?: string }) | undefined;
+  const user = session?.user as (NonNullable<typeof session> extends { user: infer U } ? U : any) & { role?: string } | undefined;
   const role = user?.role;
 
   return (

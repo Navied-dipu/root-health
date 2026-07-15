@@ -3,6 +3,10 @@ import { serverFetch, serverMutation } from "../core/server";
 export const getPatientsData = async () => {
   return await serverFetch<any[]>("/api/patients");
 };
+
+export const getPatientsByDoctor = async (doctorName: string) => {
+  return await serverFetch<any[]>(`/api/patients?doctor=${encodeURIComponent(doctorName)}`);
+};
 // Define the shape of the patient data you are sending
 
 
